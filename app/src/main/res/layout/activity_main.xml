@@ -79,6 +79,51 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
+                <Button
+                    android:id="@+id/bt_open_shutter"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="开光源"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/bt_close_shutter"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="关光源"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/bt_get_light"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="光源"
+                    android:onClick="disconnect"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/bt_get_volume"
+                    style="?android:textAppearanceSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="音量"
+                    android:onClick="disconnect"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
                 <EditText
                     android:id="@+id/send_et"
                     android:layout_width="match_parent"
