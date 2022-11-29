@@ -85,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.connect:
-                connect(Const.HOST, Const.TCP_PORT);
                 break;
 
             case R.id.send_btn:
@@ -111,7 +110,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_open_shutter:
 //                String openShutterCmd = "AT+LightSource=On<CR>";
 //                byte[] openShutterCmdBytes = openShutterCmd.getBytes(StandardCharsets.UTF_8);
-                TcpManager.getInstance().sendMessage(Const.openShutterCmdBytes, new MessageStateListener() {
+                TcpManager.getInstance().sendMessage(Const.HOST, Const.TCP_PORT, Const.openShutterCmdBytes, new MessageStateListener() {
                     @Override
                     public void isSendSuccss(boolean isSuccess) {
                         if (isSuccess) {
@@ -123,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_close_shutter:
 //                String closeShutterCmd = "AT+LightSource=Off<CR>";
 //                byte[] closeShutterCmdBytes = closeShutterCmd.getBytes(StandardCharsets.UTF_8);
-                TcpManager.getInstance().sendMessage(Const.closeShutterCmdBytes, new MessageStateListener() {
+                TcpManager.getInstance().sendMessage(Const.HOST, Const.TCP_PORT, Const.closeShutterCmdBytes, new MessageStateListener() {
                     @Override
                     public void isSendSuccss(boolean isSuccess) {
                         if (isSuccess) {
@@ -138,17 +137,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.bt_disconnect:
-                TcpManager.getInstance().getTcpClient().disconnect();
+                TcpManager.getInstance().disConnect();
                 break;
-        }
-    }
-
-    private void connect(String ip, int port) {
-        Log.d(TAG, "connect");
-        if (!TcpManager.getInstance().getTcpClient().getConnectStatus()) {
-            TcpManager.getInstance().connect(ip, port);//连接服务器
-        } else {
-            TcpManager.getInstance().getTcpClient().disconnect();
         }
     }
 

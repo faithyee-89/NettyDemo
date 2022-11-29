@@ -1,12 +1,11 @@
 package com.littlegreens.netty.client;
 
-import com.littlegreens.netty.client.bean.MessageBean;
 import com.littlegreens.netty.client.listener.MessageStateListener;
 
 /**
-  * @desc: 设备通讯入口类
-  * @author: yewei
-  * @data: 2022/11/10 10:12
+ * @desc: 设备通讯入口类
+ * @author: yewei
+ * @data: 2022/11/10 10:12
  */
 public class TcpManager {
     private static volatile TcpManager instance;
@@ -48,11 +47,15 @@ public class TcpManager {
                 .build();
     }
 
-    public void connect(String ip, int port){
-        tcpClient.connect(ip, port);
+    public void sendMessage(String ipAddr, int port, int[] msg, final MessageStateListener listener) {
+        try {
+            tcpClient.sendMsgToServer(ipAddr, port, msg, listener);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void sendMessage(int[] msg, final MessageStateListener listener) {
-        tcpClient.sendMsgToServer(msg, listener);
+    public void disConnect() {
+        tcpClient.disconnect();
     }
 }
