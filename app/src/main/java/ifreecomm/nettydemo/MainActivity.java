@@ -11,12 +11,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.littlegreens.netty.client.TcpManager;
 import com.littlegreens.netty.client.listener.MessageStateListener;
 import com.littlegreens.netty.client.listener.NettyClientListener;
-import com.littlegreens.netty.client.NettyTcpClient;
 import com.littlegreens.netty.client.status.ConnectState;
-
-import java.nio.charset.StandardCharsets;
 
 import ifreecomm.nettydemo.adapter.LogAdapter;
 import ifreecomm.nettydemo.bean.LogBean;
@@ -31,13 +29,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button mBtCloseShutter;
     private Button mBtLightState;
     private Button mBtVolumeState;
+    private Button mBtDisconnect;
     private EditText mEtSend;
     private RecyclerView mRvSendList;
     private RecyclerView mRvReceList;
 
     private LogAdapter mSendLogAdapter = new LogAdapter();
     private LogAdapter mReceLogAdapter = new LogAdapter();
-    private NettyTcpClient mNettyTcpClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,21 +43,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         findViews();
         initView();
-
-        mNettyTcpClient = new NettyTcpClient.Builder()
-                .setHost(Const.HOST)    //设置服务端地址
-                .setTcpPort(Const.TCP_PORT) //设置服务端端口号
-                .setMaxReconnectTimes(1)    //设置最大重连次数
-                .setReconnectIntervalTime(5)    //设置重连间隔时间。单位：秒
-                .setSendheartBeat(true) //设置是否发送心跳
-                .setHeartBeatInterval(5)    //设置心跳间隔时间。单位：秒
-                .setHeartBeatData("I'm is HeartBeatData") //设置心跳数据，可以是String类型，也可以是byte[]，以后设置的为准
-                .setIndex(0)    //设置客户端标识.(因为可能存在多个tcp连接)
-//                .setPacketSeparator("#")//用特殊字符，作为分隔符，解决粘包问题，默认是用换行符作为分隔符
-//                .setMaxPacketLong(1024)//设置一次发送数据的最大长度，默认是1024
-                .build();
-
-        mNettyTcpClient.setListener(MainActivity.this); //设置TCP监听
     }
 
     private void initView() {
@@ -70,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         LinearLayoutManager manager2 = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRvReceList.setLayoutManager(manager2);
         mRvReceList.setAdapter(mReceLogAdapter);
-
+        TcpManager.getInstance().getTcpClient().setClientListener(this);
     }
 
     private void findViews() {
@@ -85,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtCloseShutter = findViewById(R.id.bt_close_shutter);
         mBtLightState = findViewById(R.id.bt_get_light);
         mBtVolumeState = findViewById(R.id.bt_get_volume);
+        mBtDisconnect = findViewById(R.id.bt_disconnect);
 
         mBtConnect.setOnClickListener(this);
         mBtSendBtn.setOnClickListener(this);
@@ -93,6 +77,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mBtCloseShutter.setOnClickListener(this);
         mBtLightState.setOnClickListener(this);
         mBtVolumeState.setOnClickListener(this);
+        mBtDisconnect.setOnClickListener(this);
     }
 
     @Override
@@ -100,31 +85,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.connect:
-                connect();
+                connect(Const.HOST, Const.TCP_PORT);
                 break;
 
             case R.id.send_btn:
-                if (!mNettyTcpClient.getConnectStatus()) {
+                if (!TcpManager.getInstance().getTcpClient().getConnectStatus()) {
                     Toast.makeText(getApplicationContext(), "未连接,请先连接", Toast.LENGTH_SHORT).show();
                 } else {
                     final String msg = mEtSend.getText().toString();
                     if (TextUtils.isEmpty(msg.trim())) {
                         return;
                     }
-//                    Byte[] commandArrays = msg.getBytes(StandardCharsets.UTF_8);
-
-
-                    mNettyTcpClient.sendMsgToServer(msg, new MessageStateListener() {
-                        @Override
-                        public void isSendSuccss(boolean isSuccess) {
-                            if (isSuccess) {
-                                Log.d(TAG, "Write auth successful");
-                                logSend(msg);
-                            } else {
-                                Log.d(TAG, "Write auth error");
-                            }
-                        }
-                    });
                     mEtSend.setText("");
                 }
 
@@ -140,32 +111,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_open_shutter:
 //                String openShutterCmd = "AT+LightSource=On<CR>";
 //                byte[] openShutterCmdBytes = openShutterCmd.getBytes(StandardCharsets.UTF_8);
-                byte[] openShutterCmdBytes = {0x41, 0x54, 0x2B, 0x4C, 0x69, 0x67, 0x68, 0x74, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x3D, 0x4F, 0x6E, 0x0D};
-
-                mNettyTcpClient.sendMsgToServer(openShutterCmdBytes, new MessageStateListener() {
+                TcpManager.getInstance().sendMessage(Const.openShutterCmdBytes, new MessageStateListener() {
                     @Override
                     public void isSendSuccss(boolean isSuccess) {
                         if (isSuccess) {
                             logSend("发送成功");
-                            return;
                         }
-                        logSend("发送失败");
                     }
                 });
                 break;
             case R.id.bt_close_shutter:
 //                String closeShutterCmd = "AT+LightSource=Off<CR>";
 //                byte[] closeShutterCmdBytes = closeShutterCmd.getBytes(StandardCharsets.UTF_8);
-                byte[] closeShutterCmdBytes = {0x41, 0x54, 0x2B, 0x4C, 0x69, 0x67, 0x68, 0x74, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x3D, 0x4F, 0x66, 0x66,0x0D};
-
-                mNettyTcpClient.sendMsgToServer(closeShutterCmdBytes, new MessageStateListener() {
+                TcpManager.getInstance().sendMessage(Const.closeShutterCmdBytes, new MessageStateListener() {
                     @Override
                     public void isSendSuccss(boolean isSuccess) {
                         if (isSuccess) {
                             logSend("发送成功");
-                            return;
                         }
-                        logSend("发送失败");
                     }
                 });
                 break;
@@ -173,15 +136,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.bt_get_volume:
                 break;
+
+            case R.id.bt_disconnect:
+                TcpManager.getInstance().getTcpClient().disconnect();
+                break;
         }
     }
 
-    private void connect() {
+    private void connect(String ip, int port) {
         Log.d(TAG, "connect");
-        if (!mNettyTcpClient.getConnectStatus()) {
-            mNettyTcpClient.connect();//连接服务器
+        if (!TcpManager.getInstance().getTcpClient().getConnectStatus()) {
+            TcpManager.getInstance().connect(ip, port);//连接服务器
         } else {
-            mNettyTcpClient.disconnect();
+            TcpManager.getInstance().getTcpClient().disconnect();
         }
     }
 
@@ -230,24 +197,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-    }
-
-    /**
-     * 方法三：
-     * byte[] to hex string
-     *
-     * @param bytes
-     * @return
-     */
-    public static String bytesToHexFun3(byte[] bytes, int length) {
-        StringBuilder buf = new StringBuilder(length * 2);
-        for (int i = 0; i < length; i++) {// 使用String的format方法进行转换
-            buf.append(String.format("%02x", new Integer(bytes[i] & 0xFF)));
-        }
-        return buf.toString();
-    }
-
-    public void disconnect(View view) {
-        mNettyTcpClient.disconnect();
     }
 }

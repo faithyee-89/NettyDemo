@@ -12,6 +12,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.ReferenceCountUtil;
 
 
 public class NettyClientHandler extends SimpleChannelInboundHandler<String> {
@@ -22,11 +23,6 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<String> {
     private int index;
     private Object heartBeatData;
     private String packetSeparator;
-
-    //    private static final ByteBuf HEARTBEAT_SEQUENCE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Heartbeat"+System.getProperty("line.separator"),
-//            CharsetUtil.UTF_8));
-    byte[] requestBody = {(byte) 0xFE, (byte) 0xED, (byte) 0xFE, 5, 4, (byte) 0xFF, 0x0a};
-
 
     public NettyClientHandler(NettyClientListener listener, int index, boolean isSendheartBeat, Object heartBeatData) {
         this(listener,index,isSendheartBeat,heartBeatData,null);
@@ -110,6 +106,7 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<String> {
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, String msg) {
         Log.e(TAG, "channelRead0:"+msg);
         listener.onMessageResponseClient(msg, index);
+//        ReferenceCountUtil.release(msg);
     }
 
     /**
